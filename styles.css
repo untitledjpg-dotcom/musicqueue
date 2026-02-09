@@ -1,178 +1,74 @@
-/* ---------- RESET ---------- */
+/* =========================
+   Base + Theme
+   ========================= */
 * { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; height: 100%; }
+html, body { height: 100%; margin: 0; }
 
-/* ---------- THEME ---------- */
-:root {
+:root{
   --bg: #0c0d10;
-  --panel: #14161c;
-  --border: #242730;
-  --text: #ffffff;
-  --muted: rgba(255,255,255,.6);
-  --accent: #ffffff;
+  --panel: rgba(20,22,28,.92);
+  --panel2: rgba(20,22,28,.65);
+  --border: rgba(255,255,255,.10);
+  --text: rgba(255,255,255,.96);
+  --muted: rgba(255,255,255,.62);
+  --muted2: rgba(255,255,255,.45);
+  --shadow: 0 18px 50px rgba(0,0,0,.45);
+  --radius: 22px;
 }
 
-body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  background: radial-gradient(1200px 800px at 20% -10%, #1c1f28, transparent 60%), var(--bg);
+html{
+  background:
+    radial-gradient(1100px 700px at 20% -10%, rgba(255,255,255,.08), transparent 60%),
+    radial-gradient(900px 600px at 110% 0%, rgba(255,255,255,.06), transparent 55%),
+    var(--bg);
+  background-attachment: fixed;
+}
+
+body{
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
   color: var(--text);
-}
-
-/* ---------- HEADER ---------- */
-.topbar {
-  padding: 24px;
-  border-bottom: 1px solid var(--border);
-}
-
-h1 {
-  font-size: 28px;
-  margin: 0;
-}
-
-.subtitle {
-  margin-top: 6px;
-  color: var(--muted);
-}
-
-/* ---------- CARDS ---------- */
-.card {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 16px;
-  margin: 16px;
-}
-
-/* ---------- AUTH ---------- */
-.auth {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.auth-title {
-  font-weight: 700;
-}
-
-.auth-status {
-  font-size: 13px;
-  color: var(--muted);
-  margin-top: 4px;
-}
-
-.auth-right {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.auth-hint {
-  width: 100%;
-  font-size: 12px;
-  color: var(--muted);
-  margin-top: 8px;
-}
-
-/* ---------- GRID ---------- */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: 16px;
-  padding: 16px;
-}
-
-/* ---------- PANES ---------- */
-.pane {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  overflow: hidden;
-  transition: all .3s ease;
-}
-
-.span11 { grid-column: span 11; }
-.span1  { grid-column: span 1; }
-
-.pane-header {
-  padding: 16px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.pane-body {
-  padding: 16px;
-}
-
-.rail {
-  cursor: pointer;
-  opacity: .7;
-}
-
-/* ---------- FORM ---------- */
-label {
-  display: block;
-  margin-top: 16px;
-  font-size: 12px;
-  color: var(--muted);
-}
-
-input, select, textarea {
-  width: 100%;
-  margin-top: 6px;
-  padding: 10px;
-  background: #0f1116;
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-}
-
-textarea { min-height: 80px; }
-
-/* ---------- BUTTONS ---------- */
-button {
-  padding: 10px 14px;
-  border-radius: 999px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.primary {
-  background: var(--accent);
-  color: #000;
-  border: none;
-}
-
-.ghost {
   background: transparent;
-  color: var(--text);
-  border: 1px solid var(--border);
 }
 
-.row {
-  display: flex;
-  gap: 8px;
-  margin-top: 16px;
+/* =========================
+   Layout
+   ========================= */
+.wrap{
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 18px 18px 28px;
 }
 
-/* --- TOPBAR + SYNC (adds the dot + right-side controls) --- */
 .topbar{
   display:flex;
   align-items:flex-end;
   justify-content:space-between;
-  gap:16px;
+  gap: 18px;
+  padding: 10px 6px 18px;
 }
 
+.brand h1{
+  font-size: 28px;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+.subtitle{
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+/* =========================
+   Sync indicator
+   ========================= */
 .sync{
   display:flex;
   align-items:center;
   gap:10px;
   flex-wrap:wrap;
-  padding-bottom:2px;
+  padding-bottom: 2px;
 }
-
 .dot{
   width:10px;
   height:10px;
@@ -180,97 +76,373 @@ button {
   background: rgba(255,255,255,.25);
   display:inline-block;
 }
-.dot.online{ background: rgba(255,255,255,.9); }
-.dot.busy{ background: rgba(255,255,255,.6); }
-.dot.err{ background: rgba(255,90,90,.9); }
-
+.dot.online{ background: rgba(255,255,255,.90); }
+.dot.busy{ background: rgba(255,255,255,.60); }
+.dot.err{ background: rgba(255,90,90,.95); }
 .label{
   font-size:12px;
   color: var(--muted);
   white-space:nowrap;
 }
 
-/* --- 12-col grid that won't collapse weirdly --- */
-.grid, .panes{
+/* =========================
+   Cards / Auth
+   ========================= */
+.card{
+  background: var(--panel);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  border-radius: var(--radius);
+  padding: 14px 14px;
+  margin: 10px 0 16px;
+}
+
+.auth{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.authTitle{
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.authStatus{
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.authHint{
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.authRight{
+  display:flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items:center;
+}
+
+/* =========================
+   Panes Grid (12 columns)
+   ========================= */
+.panes{
   display:grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap:16px;
-  padding:16px;
+  gap: 16px;
 }
 
-/* Critical: prevents text from overflowing/overlapping in grid children */
-.pane{ min-width:0; }
-.pane *{ min-width:0; }
+.span11{ grid-column: span 11; }
+.span1{ grid-column: span 1; }
 
-/* --- RAIL MODE (collapsed tab) --- */
-.pane.rail{
-  padding:0;
+.pane{
+  background: var(--panel);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  border-radius: var(--radius);
   overflow:hidden;
-  cursor:pointer;
+  min-width: 0; /* critical for no overlap */
+  transition: grid-column .28s ease, opacity .28s ease, transform .28s ease;
 }
 
-/* Hide the normal pane UI when collapsed */
-.pane.rail .pane-header,
-.pane.rail .pane-body{
-  display:none;
+.paneHeader{
+  padding: 16px 16px 14px;
+  display:flex;
+  justify-content:space-between;
+  gap: 12px;
+  align-items:flex-start;
+}
+.paneHeader h2{
+  margin: 0;
+  font-size: 16px;
+  letter-spacing:-0.01em;
+}
+.paneHeader p{
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+.sep{
+  height:1px;
+  background: var(--border);
+}
+.paneBody{
+  padding: 16px;
 }
 
-/* Show the rail button when collapsed */
+/* =========================
+   Rail Mode (collapsed tab)
+   ========================= */
 .railBtn{
-  display:none; /* default hidden unless rail mode */
+  display:none; /* only in rail mode */
+}
+
+.pane.rail{
+  cursor:pointer;
+  background: var(--panel2);
+}
+
+.pane.rail .paneHeader,
+.pane.rail .paneBody{
+  display:none !important;
 }
 
 .pane.rail .railBtn{
   display:flex;
   height:100%;
   width:100%;
+  padding: 16px 10px;
   align-items:center;
   justify-content:center;
-  gap:10px;
+  gap: 10px;
   background: transparent;
   border:0;
   color: var(--text);
-  padding:12px;
 }
 
-/* Icon + label styling */
-.railIcon{
-  width:24px;
-  height:24px;
-  opacity:.9;
-  flex:0 0 auto;
-}
+.railIcon{ width: 24px; height: 24px; opacity: .92; }
+.railIcon svg{ width:24px; height:24px; display:block; }
 
 .railLabel{
-  font-weight:700;
+  font-weight: 800;
   letter-spacing:-0.01em;
-  opacity:.9;
 }
 
-/* Optional: small pill counter in rail */
 .railPill{
-  font-size:11px;
-  color: rgba(255,255,255,.7);
+  font-size: 11px;
+  color: rgba(255,255,255,.72);
   border: 1px solid var(--border);
-  padding:4px 8px;
-  border-radius:999px;
-  white-space:nowrap;
+  padding: 4px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* =========================
+   Form
+   ========================= */
+label{
+  display:block;
+  margin-top: 14px;
+  font-size: 12px;
+  color: var(--muted);
+}
+input, select, textarea{
+  width:100%;
+  margin-top: 7px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(10,12,16,.85);
+  color: var(--text);
+  outline: none;
+}
+textarea{ min-height: 86px; resize: vertical; }
+
+.grid2{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.rel{ position: relative; }
+
+.btnRow{
+  display:flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+/* =========================
+   Buttons
+   ========================= */
+button{
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-weight: 800;
+  letter-spacing:-0.01em;
+  cursor:pointer;
+}
+
+.btnPrimary{
+  border: none;
+  background: rgba(255,255,255,.92);
+  color: #000;
+}
+
+.btnGhost{
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+}
+
+button:disabled{
+  opacity: .6;
+  cursor:not-allowed;
+}
+
+/* =========================
+   Suggestions (fix white-on-white)
+   ========================= */
+.suggestBox{
+  position: relative;
+}
+
+.suggestWrap{
+  margin-top: 8px;
+  background: rgba(10,12,16,.98);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow:hidden;
+}
+
+.suggestBtn{
+  width:100%;
+  text-align:left;
+  background: transparent;
+  border: 0;
+  padding: 10px 12px;
+  color: var(--text);
+}
+.suggestBtn:hover{ background: rgba(255,255,255,.06); }
+
+.suggestTitle{
+  font-size: 13px;
+  font-weight: 800;
+}
+.suggestSub{
+  margin-top: 3px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* =========================
+   Queue list
+   ========================= */
+.queueTools{
+  display:grid;
+  grid-template-columns: 1fr 180px 180px;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.items{
+  display:flex;
+  flex-direction:column;
+  gap: 12px;
+}
+
+.item{
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: rgba(10,12,16,.55);
+  padding: 14px;
+}
+
+.itemRow{
+  display:flex;
+  gap: 14px;
+  align-items:flex-start;
+  flex-wrap: wrap;
+}
+
+.itemLeft{
+  width: 210px;
+  flex: 0 0 auto;
+}
+
+.coverWide{
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,.05);
+  object-fit: cover;
+  display:block;
+}
+
+.metaRow{
+  display:flex;
+  gap: 8px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+
+.pill{
+  font-size: 11px;
+  color: rgba(255,255,255,.72);
+  border: 1px solid var(--border);
+  padding: 4px 8px;
+  border-radius: 999px;
+}
+
+.title{
+  margin-top: 10px;
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+}
+
+.artist{
+  margin-top: 12px;
+  font-size: 21px;
+  font-weight: 800;
+  color: rgba(255,255,255,.92);
+}
+
+.albumLine{
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.notes{
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.tags{
+  margin-top: 10px;
+  display:flex;
+  flex-wrap:wrap;
+  gap: 8px;
+}
+
+.actions{
+  margin-top: 12px;
+  display:flex;
+  gap: 10px;
+  flex-wrap:wrap;
+}
+
+.hint{
+  margin-top: 12px;
+  color: var(--muted2);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* =========================
+   Utilities / Mobile
+   ========================= */
+.hidden{ display:none !important; }
+.mobileOnly{ display:none; }
+
+@media (max-width: 980px){
+  .queueTools{ grid-template-columns: 1fr; }
+  .grid2{ grid-template-columns: 1fr; }
+  .mobileOnly{ display:inline-flex; }
 }
 
 @media (max-width: 900px){
-  /* On mobile, don't do 12-col side-by-side */
-  .grid, .panes{ grid-template-columns: 1fr; }
-
-  /* Your app.js already toggles display on panes for mobile */
-}
-
-
-
-/* ---------- UTILS ---------- */
-.hidden { display: none; }
-.mobile-only { display: none; }
-
-@media (max-width: 900px) {
-  .mobile-only { display: inline-flex; }
-  .grid { grid-template-columns: 1fr; }
+  /* On mobile we show only one pane at a time (JS toggles display) */
+  .panes{ grid-template-columns: 1fr; }
+  .itemLeft{ width: 100%; }
 }
