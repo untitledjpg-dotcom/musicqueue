@@ -1,98 +1,166 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Music Queue</title>
-
-  <link rel="stylesheet" href="./styles.css">
+  <meta charset="utf-8"> <!-- L4 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1"> <!-- L5 -->
+  <title>Music Queue</title> <!-- L6 -->
+  <link rel="stylesheet" href="./styles.css"> <!-- L7 -->
 </head>
 
-<body>
-  <!-- HEADER -->
-  <header class="topbar">
-    <div>
-      <h1>Music Queue</h1>
-      <p class="subtitle">Save music to listen to later. No algorithms.</p>
-    </div>
-  </header>
-
-  <!-- AUTH -->
-  <section class="card auth">
-    <div class="auth-left">
-      <div class="auth-title">Account</div>
-      <div id="authStatus" class="auth-status">
-        Sign in to sync across devices
+<body> <!-- L10 -->
+  <div class="wrap"> <!-- L11 -->
+    <!-- Top Bar -->
+    <header class="topbar"> <!-- L13 -->
+      <div class="brand"> <!-- L14 -->
+        <h1>Music Queue</h1> <!-- L15 -->
+        <p class="subtitle">A personal “listen later” queue for albums, artists, and tracks.</p> <!-- L16 -->
       </div>
-    </div>
 
-    <div class="auth-right">
-      <input id="authEmail" type="email" placeholder="you@email.com">
-      <button id="sendLinkBtn" class="primary">Send sign-in link</button>
-      <button id="signOutBtn" class="ghost hidden">Sign out</button>
-    </div>
+      <div class="sync" title="Sync status"> <!-- L19 -->
+        <span id="syncDot" class="dot"></span> <!-- L20 -->
+        <span id="syncLabel" class="label">Signed out</span> <!-- L21 -->
+        <button id="refreshBtn" class="btnGhost" type="button">Refresh</button> <!-- L22 -->
+      </div>
+    </header>
 
-    <div id="authHint" class="auth-hint"></div>
-  </section>
+    <!-- Auth (hidden when signed in) -->
+    <section id="authCard" class="card auth"> <!-- L27 -->
+      <div class="authLeft"> <!-- L28 -->
+        <div class="authTitle">Account</div> <!-- L29 -->
+        <div id="authStatus" class="authStatus">Sign in to sync across devices.</div> <!-- L30 -->
+        <div id="authHint" class="authHint"></div> <!-- L31 -->
+      </div>
 
-  <!-- APP -->
-  <main class="grid">
-    <!-- ADD -->
-    <section id="paneInput" class="pane active span11">
-      <header class="pane-header">
-        <h2>Add to queue</h2>
-        <button id="mobileViewQueueBtn" class="ghost mobile-only">
-          View queue
+      <div class="authRight"> <!-- L34 -->
+        <input id="authEmail" type="email" placeholder="you@email.com" autocomplete="email"> <!-- L35 -->
+        <button id="sendLinkBtn" class="btnPrimary" type="button">Send sign-in link</button> <!-- L36 -->
+        <button id="signOutBtn" class="btnGhost" type="button" style="display:none;">Sign out</button> <!-- L37 -->
+      </div>
+    </section>
+
+    <!-- Panes (12-col) -->
+    <main class="panes" id="panes"> <!-- L43 -->
+      <!-- ADD PANE -->
+      <section id="paneInput" class="pane active span11" aria-label="Add pane"> <!-- L45 -->
+        <button id="railInput" class="railBtn" type="button" title="Open Add"> <!-- L46 -->
+          <div class="railIcon" aria-hidden="true"> <!-- L47 -->
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M12 5v14M5 12h14" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="railLabel">Add</div>
+          <div id="queuedRailPill" class="railPill">0 queued</div>
         </button>
-      </header>
 
-      <div class="pane-body">
-        <label>Type</label>
-        <select id="type">
-          <option>Album</option>
-          <option>Artist</option>
-          <option>Track</option>
-        </select>
+        <header class="paneHeader"> <!-- L59 -->
+          <div>
+            <h2>Add to queue</h2>
+            <p>Start typing, pick a suggestion — we’ll fill the artist/album and grab a cover.</p>
+          </div>
+          <button id="mobileViewQueueBtn" class="btnGhost mobileOnly" type="button">View Queue</button> <!-- L64 -->
+        </header>
 
-        <label id="titleLabel">Title</label>
-        <input id="title" autocomplete="off">
-        <div id="suggestions"></div>
+        <div class="sep"></div>
 
-        <div id="trackAlbumWrap" class="hidden">
-          <label>Album</label>
-          <input id="album">
+        <div class="paneBody"> <!-- L69 -->
+          <div class="grid2"> <!-- L70 -->
+            <div>
+              <label>Type</label>
+              <select id="type">
+                <option>Album</option>
+                <option>Artist</option>
+                <option>Track</option>
+              </select>
+            </div>
+
+            <div class="rel">
+              <label id="titleLabel">Title</label>
+              <input id="title" placeholder="Start typing…" autocomplete="off">
+              <div id="suggestions" class="suggestBox"></div>
+            </div>
+          </div>
+
+          <div id="trackAlbumWrap" class="hidden">
+            <label>Album (for Track items)</label>
+            <input id="album" placeholder="Auto-filled when possible">
+          </div>
+
+          <label>Artist</label>
+          <input id="artist" placeholder="Auto-filled when possible">
+
+          <div class="grid2">
+            <div>
+              <label>Tags</label>
+              <input id="tags" placeholder="comma-separated: jazz, ambient, for-work">
+            </div>
+            <div>
+              <label>Direct Qobuz URL</label>
+              <input id="qobuzUrl" placeholder="https://play.qobuz.com/…">
+            </div>
+          </div>
+
+          <label>Notes</label>
+          <textarea id="notes" placeholder="Where did you hear about it? Why did it catch you?"></textarea>
+
+          <div class="btnRow">
+            <button id="addBtn" class="btnPrimary" type="button">Add</button>
+            <button id="clearBtn" class="btnGhost" type="button">Clear</button>
+          </div>
+
+          <p class="hint">
+            Tip: On desktop, click the skinny tab to swap panels. On mobile, use “View Queue”.
+          </p>
         </div>
+      </section>
 
-        <label>Artist</label>
-        <input id="artist">
+      <!-- QUEUE PANE -->
+      <section id="paneQueue" class="pane rail span1" aria-label="Queue pane"> <!-- L130 -->
+        <button id="railQueue" class="railBtn" type="button" title="Open Queue"> <!-- L131 -->
+          <div class="railIcon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M8 6h13M8 12h13M8 18h13" stroke="white" stroke-width="2" stroke-linecap="round"/>
+              <path d="M3.5 6h.5M3.5 12h.5M3.5 18h.5" stroke="white" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="railLabel">Queue</div>
+          <div id="listenedRailPill" class="railPill">0 listened</div>
+        </button>
 
-        <label>Notes</label>
-        <textarea id="notes"></textarea>
+        <header class="paneHeader">
+          <div>
+            <h2>Your queue</h2>
+            <p>Search, open in Qobuz, and mark listened.</p>
+          </div>
+          <button id="jumpAddBtn" class="btnGhost" type="button">Add</button>
+        </header>
 
-        <div class="row">
-          <button id="addBtn" class="primary">Add</button>
-          <button id="clearBtn" class="ghost">Clear</button>
+        <div class="sep"></div>
+
+        <div class="paneBody">
+          <div class="queueTools">
+            <input id="search" placeholder="Search title / artist / album / tags / notes">
+            <select id="filterStatus">
+              <option value="queued">Queued</option>
+              <option value="listened">Listened</option>
+              <option value="all">All</option>
+            </select>
+            <select id="sort">
+              <option value="newest">Sort: Newest</option>
+              <option value="oldest">Sort: Oldest</option>
+              <option value="type">Sort: Type</option>
+              <option value="title">Sort: Title</option>
+            </select>
+          </div>
+
+          <div id="items" class="items"></div>
         </div>
-      </div>
-    </section>
+      </section>
+    </main>
+  </div>
 
-    <!-- QUEUE -->
-    <section id="paneQueue" class="pane rail span1">
-      <header class="pane-header">
-        <h2>Queue</h2>
-        <button id="jumpAddBtn" class="ghost">Add</button>
-      </header>
-
-      <div class="pane-body">
-        <input id="search" placeholder="Search">
-        <div id="items"></div>
-      </div>
-    </section>
-  </main>
-
-  <!-- SCRIPTS -->
-  <script src="./config.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./app.js" defer></script>
+  <!-- Scripts -->
+  <script src="./config.js"></script> <!-- L198 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> <!-- L199 -->
+  <script src="./app.js" defer></script> <!-- L200 -->
 </body>
 </html>
