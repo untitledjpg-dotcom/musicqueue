@@ -1,17 +1,87 @@
-(() => {
-  /******************************************************************
-   * CONFIG + SUPABASE
-   ******************************************************************/
-  const SUPABASE_URL = (window.APP_CONFIG && window.APP_CONFIG.SUPABASE_URL) || ""; // L6
-  const SUPABASE_ANON_KEY = (window.APP_CONFIG && window.APP_CONFIG.SUPABASE_ANON_KEY) || ""; // L7
+window.__MQ_LOADED__ = true;
+
+document.addEventListener("DOMContentLoaded", () => {
+  const SUPABASE_URL = (window.APP_CONFIG && window.APP_CONFIG.SUPABASE_URL) || "";
+  const SUPABASE_ANON_KEY = (window.APP_CONFIG && window.APP_CONFIG.SUPABASE_ANON_KEY) || "";
   const supabase = (window.supabase && window.supabase.createClient)
     ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-    : null; // L10
+    : null;
 
-  const TABLE = "queue_items"; // L12
-  const $ = (id) => document.getElementById(id); // L13
+  const TABLE = "queue_items";
+  const $ = (id) => document.getElementById(id);
 
-  function escapeHtml(str) { // L15
+  // --- Required DOM (hard check) ---
+  const requiredIds = ["paneInput","paneQueue","addBtn","mobileViewQueueBtn","railInput","railQueue","jumpAddBtn","refreshBtn"];
+  const missing = requiredIds.filter(id => !$(id));
+  if (missing.length) {
+    alert("UI mismatch: missing element IDs: " + missing.join(", ") +
+      "\n\nThis means GitHub Pages is serving an older index.html or you edited the wrong folder (root vs /docs).");
+    console.error("Missing IDs:", missing);
+    return;
+  }
+
+  // DOM
+  const paneInput = $("paneInput");
+  const paneQueue = $("paneQueue");
+  const railInput = $("railInput");
+  const railQueue = $("railQueue");
+  const mobileViewQueueBtn = $("mobileViewQueueBtn");
+  const jumpAddBtn = $("jumpAddBtn");
+
+  const syncDot = $("syncDot");
+  const syncLabel = $("syncLabel");
+  const refreshBtn = $("refreshBtn");
+
+  const authCard = $("authCard");
+  const authEmail = $("authEmail");
+  const sendLinkBtn = $("sendLinkBtn");
+  const signOutBtn = $("signOutBtn");
+  const authStatus = $("authStatus");
+  const authHint = $("authHint");
+
+  const typeEl = $("type");
+  const titleLabelEl = $("titleLabel");
+  const titleEl = $("title");
+  const suggestionsEl = $("suggestions");
+  const trackAlbumWrap = $("trackAlbumWrap");
+  const albumEl = $("album");
+  const artistEl = $("artist");
+  const tagsEl = $("tags");
+  const qobuzUrlEl = $("qobuzUrl");
+  const notesEl = $("notes");
+  const addBtn = $("addBtn");
+  const clearBtn = $("clearBtn");
+
+  const queuedRailPill = $("queuedRailPill");
+  const listenedRailPill = $("listenedRailPill");
+
+  const searchEl = $("search");
+  const filterStatusEl = $("filterStatus");
+  const sortEl = $("sort");
+  const itemsEl = $("items");
+
+  // Helpers
+  function isConfigured() {
+    return !!(supabase && SUPABASE_URL && SUPABASE_ANON_KEY);
+  }
+  function setDot(state) {
+    syncDot?.classList.remove("online","busy","err");
+    if (state) syncDot?.classList.add(state);
+  }
+  function setBusy(v, label) {
+    addBtn.disabled = v;
+    refreshBtn.disabled = v;
+    setDot(v ? "busy" : "online");
+    syncLabel.textContent = label || (v ? "Working…" : "Ready");
+  }
+  function setError(label) {
+    setDot("err");
+    syncLabel.textContent = label || "Error";
+  }
+  function normalizeTags(s) {
+    return (s || "").split(",").map(t => t.trim()).filter(Boolean);
+  }
+  function escapeHtml(str) {
     return String(str ?? "")
       .replaceAll("&", "&amp;")
       .replaceAll("<", "&lt;")
@@ -19,18 +89,12 @@
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#039;");
   }
-
-  function normalizeTags(s) { // L24
-    return (s || "").split(",").map(t => t.trim()).filter(Boolean);
-  }
-
-  function qobuzSearchUrl(query) { // L28
+  function qobuzSearchUrl(query) {
     const base = "https://www.qobuz.com/us-en/search";
     const q = encodeURIComponent((query || "").trim());
     return `${base}?q=${q}&i=boutique`;
   }
-
-  function buildQueryFromFields(type, title, artist, album) { // L33
+  function buildQueryFromFields(type, title, artist, album) {
     title = (title || "").trim();
     artist = (artist || "").trim();
     album = (album || "").trim();
@@ -43,76 +107,8 @@
     return q;
   }
 
-  function isConfigured() { // L46
-    return !!(supabase && SUPABASE_URL && SUPABASE_ANON_KEY);
-  }
-
-  /******************************************************************
-   * DOM
-   ******************************************************************/
-  const paneInput = $("paneInput"); // L55
-  const paneQueue = $("paneQueue"); // L56
-  const railInput = $("railInput"); // L57
-  const railQueue = $("railQueue"); // L58
-  const mobileViewQueueBtn = $("mobileViewQueueBtn"); // L59
-  const jumpAddBtn = $("jumpAddBtn"); // L60
-
-  const queuedRailPill = $("queuedRailPill"); // L62
-  const listenedRailPill = $("listenedRailPill"); // L63
-
-  const syncDot = $("syncDot"); // L65
-  const syncLabel = $("syncLabel"); // L66
-  const refreshBtn = $("refreshBtn"); // L67
-
-  const authCard = $("authCard"); // L69
-  const authEmail = $("authEmail"); // L70
-  const sendLinkBtn = $("sendLinkBtn"); // L71
-  const signOutBtn = $("signOutBtn"); // L72
-  const authStatus = $("authStatus"); // L73
-  const authHint = $("authHint"); // L74
-
-  const typeEl = $("type"); // L76
-  const titleLabelEl = $("titleLabel"); // L77
-  const titleEl = $("title"); // L78
-  const suggestionsEl = $("suggestions"); // L79
-  const trackAlbumWrap = $("trackAlbumWrap"); // L80
-  const albumEl = $("album"); // L81
-  const artistEl = $("artist"); // L82
-  const tagsEl = $("tags"); // L83
-  const qobuzUrlEl = $("qobuzUrl"); // L84
-  const notesEl = $("notes"); // L85
-  const addBtn = $("addBtn"); // L86
-  const clearBtn = $("clearBtn"); // L87
-
-  const searchEl = $("search"); // L89
-  const filterStatusEl = $("filterStatus"); // L90
-  const sortEl = $("sort"); // L91
-  const itemsEl = $("items"); // L92
-
-  /******************************************************************
-   * Status dot helpers
-   ******************************************************************/
-  function setDot(state) { // L97
-    syncDot?.classList.remove("online", "busy", "err");
-    if (state) syncDot?.classList.add(state);
-  }
-
-  function setBusy(v, label) { // L102
-    addBtn && (addBtn.disabled = v);
-    refreshBtn && (refreshBtn.disabled = v);
-    setDot(v ? "busy" : "online");
-    syncLabel && (syncLabel.textContent = label || (v ? "Working…" : "Ready"));
-  }
-
-  function setError(label) { // L110
-    setDot("err");
-    syncLabel && (syncLabel.textContent = label || "Error");
-  }
-
-  /******************************************************************
-   * Tab behavior (12-col)
-   ******************************************************************/
-  function setActive(which) { // L118
+  // Tabs
+  function setActive(which) {
     const isInput = which === "input";
 
     paneInput.classList.toggle("active", isInput);
@@ -125,116 +121,201 @@
     paneQueue.classList.toggle("span11", !isInput);
     paneQueue.classList.toggle("span1", isInput);
 
-    // Mobile: show only one pane
-    if (window.matchMedia("(max-width: 900px)").matches) { // L134
+    if (window.matchMedia("(max-width: 900px)").matches) {
       paneInput.style.display = isInput ? "" : "none";
       paneQueue.style.display = isInput ? "none" : "";
     } else {
       paneInput.style.display = "";
       paneQueue.style.display = "";
     }
-
-    if (isInput) setTimeout(() => titleEl?.focus(), 120);
-    else setTimeout(() => searchEl?.focus(), 120);
   }
 
-  function makePaneExpandable(paneEl, which) { // L150
-    paneEl?.addEventListener("click", () => {
-      if (!paneEl.classList.contains("rail")) return;
-      setActive(which);
+  // Form UI
+  function updateTypeUI() {
+    const t = typeEl.value;
+    trackAlbumWrap.classList.toggle("hidden", t !== "Track");
+    titleLabelEl.textContent = (t === "Artist") ? "Artist name" : (t === "Album") ? "Album title" : "Track title";
+    titleEl.placeholder = (t === "Artist") ? "Start typing an artist name…" : (t === "Album") ? "Start typing an album title…" : "Start typing a track title…";
+  }
+  function clearForm() {
+    typeEl.value = "Album";
+    titleEl.value = "";
+    albumEl.value = "";
+    artistEl.value = "";
+    tagsEl.value = "";
+    qobuzUrlEl.value = "";
+    notesEl.value = "";
+    titleEl.dataset.mbid = "";
+    titleEl.dataset.mbtype = "";
+    titleEl.dataset.coverUrl = "";
+    titleEl.dataset.mbReleaseId = "";
+    titleEl.dataset.mbReleaseGroupId = "";
+    suggestionsEl.innerHTML = "";
+    updateTypeUI();
+    titleEl.focus();
+  }
+
+  // MusicBrainz
+  function mbTypeForCurrentSelection() {
+    const t = typeEl.value;
+    if (t === "Artist") return "artist";
+    if (t === "Album") return "release-group";
+    return "recording";
+  }
+  function coverUrlForReleaseGroup(mbid) {
+    return mbid ? `https://coverartarchive.org/release-group/${encodeURIComponent(mbid)}/front-250` : "";
+  }
+  async function mbSearch(q) {
+    const type = mbTypeForCurrentSelection();
+    const url = `https://musicbrainz.org/ws/2/${type}?query=${encodeURIComponent(q)}&fmt=json&limit=8`;
+    const res = await fetch(url);
+    if (!res.ok) return [];
+    const data = await res.json();
+
+    if (type === "artist") {
+      return (data.artists || []).map(a => ({
+        id: a.id, label: a.name, subtitle: a.disambiguation || "",
+        artist: a.name, album: "", coverUrl: ""
+      }));
+    }
+    if (type === "release-group") {
+      return (data["release-groups"] || []).map(g => ({
+        id: g.id, label: g.title,
+        subtitle: (g["first-release-date"] || "") + (g.primary_type ? ` • ${g.primary_type}` : ""),
+        artist: (g["artist-credit"]?.[0]?.name) || "",
+        album: g.title,
+        coverUrl: coverUrlForReleaseGroup(g.id),
+        mbReleaseGroupId: g.id
+      }));
+    }
+    return (data.recordings || []).map(r => {
+      const artist = (r["artist-credit"]?.[0]?.name) || "";
+      const firstRelease = (r.releases && r.releases[0]) ? r.releases[0] : null;
+      const rg = firstRelease?.["release-group"]?.id || "";
+      const album = firstRelease?.title || "";
+      return {
+        id: r.id, label: r.title,
+        subtitle: r.length ? `${Math.round(r.length/1000)}s` : "",
+        artist, album,
+        coverUrl: rg ? coverUrlForReleaseGroup(rg) : "",
+        mbReleaseId: firstRelease?.id || "",
+        mbReleaseGroupId: rg || ""
+      };
     });
   }
 
-  /******************************************************************
-   * Auth (Magic Link)
-   ******************************************************************/
-  let session = null; // L160
-  let items = []; // L161
+  let suggestTimer = null;
+  let lastKey = "";
+  function applySuggestion(r) {
+    const selectedType = typeEl.value;
+    titleEl.value = r.label || "";
 
-  function setAuthUiSignedOut() { // L163
-    authCard && (authCard.style.display = "");
-    signOutBtn && (signOutBtn.style.display = "none");
-    authStatus && (authStatus.textContent = "Sign in to sync across devices.");
-    authHint && (authHint.textContent = "");
-    syncLabel && (syncLabel.textContent = "Signed out");
-    setDot("");
-  }
-
-  function setAuthUiSignedIn(email) { // L173
-    authCard && (authCard.style.display = "none"); // hide account strip when signed in
-    signOutBtn && (signOutBtn.style.display = "");
-    authStatus && (authStatus.textContent = `Signed in as ${email}`);
-    authHint && (authHint.textContent = "");
-    syncLabel && (syncLabel.textContent = "Synced");
-    setDot("online");
-  }
-
-  async function sendMagicLink() { // L184
-    if (!isConfigured()) {
-      alert("Missing Supabase config in config.js (SUPABASE_URL + SUPABASE_ANON_KEY).");
-      return;
+    if (selectedType === "Artist") {
+      artistEl.value = r.label || "";
+      albumEl.value = "";
+    } else if (selectedType === "Album") {
+      artistEl.value = r.artist || "";
+      albumEl.value = "";
+    } else {
+      artistEl.value = r.artist || "";
+      albumEl.value = r.album || "";
     }
-    const email = (authEmail?.value || "").trim();
-    if (!email) { alert("Enter your email."); authEmail?.focus(); return; }
 
-    setBusy(true, "Sending link…");
-    try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: window.location.origin + window.location.pathname
-        }
+    titleEl.dataset.mbid = r.id || "";
+    titleEl.dataset.mbtype = mbTypeForCurrentSelection();
+    titleEl.dataset.coverUrl = r.coverUrl || "";
+    titleEl.dataset.mbReleaseId = r.mbReleaseId || "";
+    titleEl.dataset.mbReleaseGroupId = r.mbReleaseGroupId || "";
+    suggestionsEl.innerHTML = "";
+  }
+
+  function renderSuggestions(results) {
+    if (!results.length) { suggestionsEl.innerHTML = ""; return; }
+    suggestionsEl.innerHTML = `
+      <div class="suggestWrap">
+        ${results.map((r, idx) => {
+          const bits = [];
+          if (r.artist && typeEl.value !== "Artist") bits.push(r.artist);
+          if (r.album && typeEl.value === "Track") bits.push("Album: " + r.album);
+          if (r.subtitle) bits.push(r.subtitle);
+          return `
+            <button type="button" class="suggestBtn" data-sel="${idx}">
+              <div class="suggestTitle">${escapeHtml(r.label)}</div>
+              <div class="suggestSub">${escapeHtml(bits.join(" • "))}</div>
+            </button>
+          `;
+        }).join("")}
+      </div>
+    `;
+    suggestionsEl.querySelectorAll("[data-sel]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const idx = Number(btn.getAttribute("data-sel"));
+        applySuggestion(results[idx]);
       });
-      if (error) throw error;
-
-      authHint && (authHint.textContent =
-        "Check your email for the sign-in link. Open it in the same browser to complete sign-in.");
-    } catch (err) {
-      setError("Auth error");
-      alert(err.message || String(err));
-    } finally {
-      setBusy(false, session ? "Synced" : "Signed out");
-    }
+    });
   }
 
-  async function signOut() { // L212
-    if (!supabase) return;
-    setBusy(true, "Signing out…");
-    await supabase.auth.signOut();
-    session = null;
-    items = [];
-    updateCounts();
-    render();
-    setAuthUiSignedOut();
-    setBusy(false, "Signed out");
+  function setupAutocomplete() {
+    titleEl.addEventListener("input", () => {
+      const q = titleEl.value.trim();
+      if (q.length < 2) { suggestionsEl.innerHTML = ""; return; }
+      const key = mbTypeForCurrentSelection() + "::" + q.toLowerCase();
+      if (key === lastKey) return;
+
+      clearTimeout(suggestTimer);
+      suggestTimer = setTimeout(async () => {
+        lastKey = key;
+        try {
+          renderSuggestions(await mbSearch(q));
+        } catch {
+          suggestionsEl.innerHTML = "";
+        }
+      }, 300);
+    });
+
+    typeEl.addEventListener("change", () => {
+      titleEl.dataset.mbid = "";
+      titleEl.dataset.mbtype = "";
+      titleEl.dataset.coverUrl = "";
+      titleEl.dataset.mbReleaseId = "";
+      titleEl.dataset.mbReleaseGroupId = "";
+      suggestionsEl.innerHTML = "";
+      updateTypeUI();
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!suggestionsEl.contains(e.target) && e.target !== titleEl) suggestionsEl.innerHTML = "";
+    });
   }
 
-  /******************************************************************
-   * Supabase CRUD
-   ******************************************************************/
-  function normalizeRow(r) { // L229
+  // Data
+  let session = null;
+  let items = [];
+
+  function updateCounts() {
+    const queued = items.filter(x => x.status === "queued").length;
+    const listened = items.filter(x => x.status === "listened").length;
+    queuedRailPill.textContent = `${queued} queued`;
+    listenedRailPill.textContent = `${listened} listened`;
+  }
+
+  function normalizeRow(r) {
     return {
       ...r,
       qobuzUrl: r.qobuz_url || "",
       createdAt: r.created_at || "",
       listenedAt: r.listened_at || "",
-      coverUrl: r.cover_url || "",
-      mbType: r.mb_type || "",
-      mbReleaseId: r.mb_release_id || "",
-      mbReleaseGroupId: r.mb_release_group_id || ""
+      coverUrl: r.cover_url || ""
     };
   }
 
-  async function refreshFromCloud() { // L243
+  async function refreshFromCloud() {
     if (!session) { render(); return; }
     setBusy(true, "Syncing…");
     try {
       const { data, error } = await supabase
-        .from(TABLE)
-        .select("*")
-        .order("created_at", { ascending: false });
+        .from(TABLE).select("*").order("created_at", { ascending: false });
       if (error) throw error;
-
       items = (data || []).map(normalizeRow);
       updateCounts();
       render();
@@ -247,28 +328,27 @@
     }
   }
 
-  async function addItem() { // L266
+  async function addItem() {
     if (!session) { alert("Sign in first (email link)."); return; }
-
-    const type = typeEl?.value || "Album";
-    const title = (titleEl?.value || "").trim();
-    if (!title) { alert("Title is required."); titleEl?.focus(); return; }
+    const type = typeEl.value;
+    const title = titleEl.value.trim();
+    if (!title) { alert("Title is required."); titleEl.focus(); return; }
 
     const row = {
       user_id: session.user.id,
       status: "queued",
       type,
       title,
-      artist: (artistEl?.value || "").trim() || null,
-      album: (type === "Track") ? ((albumEl?.value || "").trim() || null) : null,
-      tags: normalizeTags(tagsEl?.value || ""),
-      notes: (notesEl?.value || "").trim() || null,
-      qobuz_url: (qobuzUrlEl?.value || "").trim() || null,
-      mbid: titleEl?.dataset.mbid || null,
-      mb_type: titleEl?.dataset.mbtype || null,
-      cover_url: titleEl?.dataset.coverUrl || null,
-      mb_release_id: titleEl?.dataset.mbReleaseId || null,
-      mb_release_group_id: titleEl?.dataset.mbReleaseGroupId || null
+      artist: artistEl.value.trim() || null,
+      album: (type === "Track") ? (albumEl.value.trim() || null) : null,
+      tags: normalizeTags(tagsEl.value || ""),
+      notes: notesEl.value.trim() || null,
+      qobuz_url: qobuzUrlEl.value.trim() || null,
+      mbid: titleEl.dataset.mbid || null,
+      mb_type: titleEl.dataset.mbtype || null,
+      cover_url: titleEl.dataset.coverUrl || null,
+      mb_release_id: titleEl.dataset.mbReleaseId || null,
+      mb_release_group_id: titleEl.dataset.mbReleaseGroupId || null
     };
 
     setBusy(true, "Adding…");
@@ -286,18 +366,15 @@
     }
   }
 
-  async function toggleStatus(id) { // L315
-    if (!session) return;
+  async function toggleStatus(id) {
     const it = items.find(x => x.id === id);
     if (!it) return;
-
-    const nextStatus = (it.status === "queued") ? "listened" : "queued";
-    const listenedAt = (nextStatus === "listened") ? new Date().toISOString() : null;
+    const nextStatus = it.status === "queued" ? "listened" : "queued";
+    const listenedAt = nextStatus === "listened" ? new Date().toISOString() : null;
 
     setBusy(true, "Updating…");
     try {
-      const { error } = await supabase
-        .from(TABLE)
+      const { error } = await supabase.from(TABLE)
         .update({ status: nextStatus, listened_at: listenedAt })
         .eq("id", id);
       if (error) throw error;
@@ -310,10 +387,8 @@
     }
   }
 
-  async function removeItem(id) { // L343
-    if (!session) return;
+  async function removeItem(id) {
     if (!confirm("Delete this item?")) return;
-
     setBusy(true, "Deleting…");
     try {
       const { error } = await supabase.from(TABLE).delete().eq("id", id);
@@ -327,18 +402,15 @@
     }
   }
 
-  async function editNotes(id) { // L368
-    if (!session) return;
+  async function editNotes(id) {
     const it = items.find(x => x.id === id);
     if (!it) return;
-
     const updated = prompt("Edit notes:", it.notes || "");
     if (updated === null) return;
 
     setBusy(true, "Saving…");
     try {
-      const { error } = await supabase
-        .from(TABLE)
+      const { error } = await supabase.from(TABLE)
         .update({ notes: updated.trim() || null })
         .eq("id", id);
       if (error) throw error;
@@ -351,288 +423,48 @@
     }
   }
 
-  /******************************************************************
-   * Form UI
-   ******************************************************************/
-  function updateCounts() { // L402
-    const queued = items.filter(x => x.status === "queued").length;
-    const listened = items.filter(x => x.status === "listened").length;
-    queuedRailPill && (queuedRailPill.textContent = `${queued} queued`);
-    listenedRailPill && (listenedRailPill.textContent = `${listened} listened`);
-  }
-
-  function updateTypeUI() { // L410
-    const t = typeEl?.value || "Album";
-    trackAlbumWrap && trackAlbumWrap.classList.toggle("hidden", t !== "Track");
-
-    if (titleLabelEl) {
-      titleLabelEl.textContent =
-        (t === "Artist") ? "Artist name" :
-        (t === "Album") ? "Album title" :
-                          "Track title";
-    }
-
-    if (titleEl) {
-      titleEl.placeholder =
-        (t === "Artist") ? "Start typing an artist name…" :
-        (t === "Album") ? "Start typing an album title…" :
-                          "Start typing a track title…";
-    }
-  }
-
-  function clearForm() { // L432
-    typeEl && (typeEl.value = "Album");
-    titleEl && (titleEl.value = "");
-    albumEl && (albumEl.value = "");
-    artistEl && (artistEl.value = "");
-    tagsEl && (tagsEl.value = "");
-    qobuzUrlEl && (qobuzUrlEl.value = "");
-    notesEl && (notesEl.value = "");
-
-    if (titleEl) {
-      titleEl.dataset.mbid = "";
-      titleEl.dataset.mbtype = "";
-      titleEl.dataset.coverUrl = "";
-      titleEl.dataset.mbReleaseId = "";
-      titleEl.dataset.mbReleaseGroupId = "";
-    }
-
-    suggestionsEl && (suggestionsEl.innerHTML = "");
-    updateTypeUI();
-    titleEl?.focus();
-  }
-
-  /******************************************************************
-   * MusicBrainz autocomplete + cover
-   ******************************************************************/
-  function mbTypeForCurrentSelection() { // L460
-    const t = typeEl?.value || "Album";
-    if (t === "Artist") return "artist";
-    if (t === "Album") return "release-group";
-    return "recording";
-  }
-
-  function coverUrlForReleaseGroup(mbid) { // L467
-    return mbid ? `https://coverartarchive.org/release-group/${encodeURIComponent(mbid)}/front-250` : "";
-  }
-
-  async function mbSearch(q) { // L471
-    const type = mbTypeForCurrentSelection();
-    const url = `https://musicbrainz.org/ws/2/${type}?query=${encodeURIComponent(q)}&fmt=json&limit=8`;
-    const res = await fetch(url, { method: "GET" });
-    if (!res.ok) return [];
-    const data = await res.json();
-
-    if (type === "artist") {
-      const arr = data.artists || [];
-      return arr.map(a => ({
-        id: a.id,
-        label: a.name,
-        subtitle: a.disambiguation || "",
-        artist: a.name,
-        album: "",
-        coverUrl: ""
-      }));
-    }
-
-    if (type === "release-group") {
-      const arr = data["release-groups"] || [];
-      return arr.map(g => ({
-        id: g.id,
-        label: g.title,
-        subtitle: (g["first-release-date"] || "") + (g.primary_type ? ` • ${g.primary_type}` : ""),
-        artist: (g["artist-credit"]?.[0]?.name) || "",
-        album: g.title,
-        coverUrl: coverUrlForReleaseGroup(g.id),
-        mbReleaseGroupId: g.id
-      }));
-    }
-
-    // recording (track)
-    const arr = data.recordings || [];
-    return arr.map(r => {
-      const artist = (r["artist-credit"]?.[0]?.name) || "";
-      const firstRelease = (r.releases && r.releases[0]) ? r.releases[0] : null;
-      const rg = firstRelease?.["release-group"]?.id || "";
-      const album = firstRelease?.title || "";
-      return {
-        id: r.id,
-        label: r.title,
-        subtitle: r.length ? `${Math.round(r.length / 1000)}s` : "",
-        artist,
-        album,
-        coverUrl: rg ? coverUrlForReleaseGroup(rg) : "",
-        mbReleaseId: firstRelease?.id || "",
-        mbReleaseGroupId: rg || ""
-      };
-    });
-  }
-
-  let suggestTimer = null; // L540
-  let lastSuggestKey = ""; // L541
-
-  function applySuggestion(r) { // L543
-    const selectedType = typeEl?.value || "Album";
-
-    titleEl && (titleEl.value = r.label || "");
-    if (selectedType === "Artist") {
-      artistEl && (artistEl.value = r.label || "");
-      albumEl && (albumEl.value = "");
-    } else if (selectedType === "Album") {
-      artistEl && (artistEl.value = r.artist || "");
-      albumEl && (albumEl.value = "");
-    } else {
-      // Track
-      artistEl && (artistEl.value = r.artist || "");
-      albumEl && (albumEl.value = r.album || "");
-    }
-
-    if (titleEl) {
-      titleEl.dataset.mbid = r.id || "";
-      titleEl.dataset.mbtype = mbTypeForCurrentSelection();
-      titleEl.dataset.coverUrl = r.coverUrl || "";
-      titleEl.dataset.mbReleaseId = r.mbReleaseId || "";
-      titleEl.dataset.mbReleaseGroupId = r.mbReleaseGroupId || "";
-    }
-
-    suggestionsEl && (suggestionsEl.innerHTML = "");
-  }
-
-  function renderSuggestions(results) { // L579
-    if (!suggestionsEl) return;
-    if (!results || !results.length) { suggestionsEl.innerHTML = ""; return; }
-
-    suggestionsEl.innerHTML = `
-      <div class="suggestWrap" role="listbox" aria-label="Suggestions">
-        ${results.map((r, idx) => {
-          const bits = [];
-          if (r.artist && (typeEl?.value !== "Artist")) bits.push(r.artist);
-          if (r.album && (typeEl?.value === "Track")) bits.push("Album: " + (r.album || ""));
-          if (r.subtitle) bits.push(r.subtitle);
-
-          return `
-            <button type="button" class="suggestBtn" data-sel="${idx}">
-              <div class="suggestTitle">${escapeHtml(r.label)}</div>
-              <div class="suggestSub">${escapeHtml(bits.join(" • "))}</div>
-            </button>
-          `;
-        }).join("")}
-      </div>
-    `;
-
-    suggestionsEl.querySelectorAll("[data-sel]").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const idx = Number(btn.getAttribute("data-sel"));
-        const r = results[idx];
-        if (r) applySuggestion(r);
-      });
-    });
-  }
-
-  function setupAutocomplete() { // L623
-    if (!titleEl) return;
-
-    titleEl.addEventListener("input", () => {
-      const q = titleEl.value.trim();
-      if (q.length < 2) { suggestionsEl && (suggestionsEl.innerHTML = ""); return; }
-
-      const key = mbTypeForCurrentSelection() + "::" + q.toLowerCase();
-      if (key === lastSuggestKey) return;
-
-      clearTimeout(suggestTimer);
-      suggestTimer = setTimeout(async () => {
-        lastSuggestKey = key;
-        try {
-          const results = await mbSearch(q);
-          renderSuggestions(results);
-        } catch {
-          suggestionsEl && (suggestionsEl.innerHTML = "");
-        }
-      }, 300);
-    });
-
-    typeEl?.addEventListener("change", () => {
-      suggestionsEl && (suggestionsEl.innerHTML = "");
-      if (titleEl) {
-        titleEl.dataset.mbid = "";
-        titleEl.dataset.mbtype = "";
-        titleEl.dataset.coverUrl = "";
-        titleEl.dataset.mbReleaseId = "";
-        titleEl.dataset.mbReleaseGroupId = "";
-      }
-      updateTypeUI();
-    });
-
-    document.addEventListener("click", (e) => {
-      if (!suggestionsEl) return;
-      if (!suggestionsEl.contains(e.target) && e.target !== titleEl) {
-        suggestionsEl.innerHTML = "";
-      }
-    });
-  }
-
-  /******************************************************************
-   * Render queue
-   ******************************************************************/
-  function openQobuzForItem(it) { // L682
-    const query = buildQueryFromFields(it.type || "Album", it.title || "", it.artist || "", it.album || "");
-    const url = (it.qobuzUrl && String(it.qobuzUrl).trim())
-      ? String(it.qobuzUrl).trim()
-      : qobuzSearchUrl(query);
+  function openQobuzForItem(it) {
+    const query = buildQueryFromFields(it.type, it.title, it.artist, it.album);
+    const url = it.qobuzUrl?.trim() ? it.qobuzUrl.trim() : qobuzSearchUrl(query);
     window.open(url, "_blank", "noopener,noreferrer");
   }
 
-  function render() { // L692
+  function render() {
     if (!itemsEl) return;
-
-    const q = (searchEl?.value || "").trim().toLowerCase();
-    const filterStatus = filterStatusEl?.value || "queued";
-    const sort = sortEl?.value || "newest";
-
-    let view = [...items];
 
     if (!session) {
       itemsEl.innerHTML = `<div class="empty">Sign in to view your queue.</div>`;
       return;
     }
 
-    if (filterStatus !== "all") view = view.filter(it => it.status === filterStatus);
+    const q = (searchEl?.value || "").trim().toLowerCase();
+    const filter = filterStatusEl?.value || "queued";
+    const sort = sortEl?.value || "newest";
 
+    let view = [...items];
+    if (filter !== "all") view = view.filter(it => it.status === filter);
     if (q) {
       view = view.filter(it => {
-        const hay = [
-          it.type, it.title, it.artist, it.album,
-          (it.tags || []).join(" "),
-          it.notes || ""
-        ].join(" ").toLowerCase();
+        const hay = [it.type,it.title,it.artist,it.album,(it.tags||[]).join(" "),it.notes||""].join(" ").toLowerCase();
         return hay.includes(q);
       });
     }
-
-    if (sort === "newest") view.sort((a,b) => String(b.createdAt||"").localeCompare(String(a.createdAt||"")));
-    if (sort === "oldest") view.sort((a,b) => String(a.createdAt||"").localeCompare(String(b.createdAt||"")));
-    if (sort === "type") view.sort((a,b) => String(a.type||"").localeCompare(String(b.type||"")) || String(a.title||"").localeCompare(String(b.title||"")));
-    if (sort === "title") view.sort((a,b) => String(a.title||"").localeCompare(String(b.title||"")));
-
-    itemsEl.innerHTML = "";
+    if (sort === "newest") view.sort((a,b)=>String(b.createdAt||"").localeCompare(String(a.createdAt||"")));
+    if (sort === "oldest") view.sort((a,b)=>String(a.createdAt||"").localeCompare(String(b.createdAt||"")));
+    if (sort === "type") view.sort((a,b)=>String(a.type||"").localeCompare(String(b.type||"")) || String(a.title||"").localeCompare(String(b.title||"")));
+    if (sort === "title") view.sort((a,b)=>String(a.title||"").localeCompare(String(b.title||"")));
 
     if (!view.length) {
       itemsEl.innerHTML = `<div class="empty">No items found.</div>`;
       return;
     }
 
+    itemsEl.innerHTML = "";
     for (const it of view) {
       const created = it.createdAt ? new Date(it.createdAt).toLocaleString() : "";
-      const tagPills = (it.tags || []).map(t => `<span class="pill">${escapeHtml(t)}</span>`).join("");
-
-      const artistLine = (it.type !== "Artist" && it.artist)
-        ? `<div class="artist">${escapeHtml(it.artist)}</div>` : "";
-
-      const albumLine = (it.type === "Track" && it.album)
-        ? `<div class="albumLine">Album: ${escapeHtml(it.album)}</div>` : "";
 
       const cover = it.coverUrl
-        ? `<img src="${escapeHtml(it.coverUrl)}" alt="" class="coverWide"
+        ? `<img src="${escapeHtml(it.coverUrl)}" class="coverWide" alt=""
               onerror="this.outerHTML='<div class=&quot;coverWide&quot;></div>'">`
         : `<div class="coverWide"></div>`;
 
@@ -642,32 +474,25 @@
         <div class="itemRow">
           <div class="itemLeft">
             ${cover}
-            <button type="button" class="btnPrimary w100" data-open="${it.id}">Open in Qobuz</button>
+            <button class="btnPrimary w100" data-open="${it.id}">Open in Qobuz</button>
           </div>
-
           <div style="flex:1;min-width:240px;">
             <div class="metaRow">
-              <span class="pill">${escapeHtml(it.type || "")}</span>
+              <span class="pill">${escapeHtml(it.type||"")}</span>
               <span class="pill">${it.status === "queued" ? "Queued" : "Listened"}</span>
-              ${it.qobuzUrl ? `<span class="pill">Direct URL</span>` : ""}
-              ${it.mbid ? `<span class="pill">MB</span>` : ""}
-              <span style="margin-left:auto;color:var(--muted2);font-size:12px;">Added: ${escapeHtml(created)}</span>
+              <span style="margin-left:auto;color:rgba(255,255,255,.45);font-size:12px;">Added: ${escapeHtml(created)}</span>
             </div>
-
-            <div class="title">${escapeHtml(it.title || "")}</div>
-            ${artistLine}
-            ${albumLine}
+            <div class="title">${escapeHtml(it.title||"")}</div>
+            ${it.type !== "Artist" && it.artist ? `<div class="artist">${escapeHtml(it.artist)}</div>` : ""}
+            ${it.type === "Track" && it.album ? `<div class="albumLine">Album: ${escapeHtml(it.album)}</div>` : ""}
             ${it.notes ? `<div class="notes">${escapeHtml(it.notes)}</div>` : ""}
-            ${tagPills ? `<div class="tags">${tagPills}</div>` : ""}
+            ${(it.tags||[]).length ? `<div class="tags">${(it.tags||[]).map(t=>`<span class="pill">${escapeHtml(t)}</span>`).join("")}</div>` : ""}
           </div>
         </div>
-
         <div class="actions">
-          <button type="button" class="btnGhost" data-toggle="${it.id}">
-            ${it.status === "queued" ? "Mark listened" : "Back to queue"}
-          </button>
-          <button type="button" class="btnGhost" data-notes="${it.id}">Edit notes</button>
-          <button type="button" class="btnGhost" data-del="${it.id}">Delete</button>
+          <button class="btnGhost" data-toggle="${it.id}">${it.status === "queued" ? "Mark listened" : "Back to queue"}</button>
+          <button class="btnGhost" data-notes="${it.id}">Edit notes</button>
+          <button class="btnGhost" data-del="${it.id}">Delete</button>
         </div>
       `;
 
@@ -680,49 +505,99 @@
     }
   }
 
-  /******************************************************************
-   * Events
-   ******************************************************************/
-  railInput?.addEventListener("click", () => setActive("input")); // L835
-  railQueue?.addEventListener("click", () => setActive("queue")); // L836
-  mobileViewQueueBtn?.addEventListener("click", () => setActive("queue")); // L837
-  jumpAddBtn?.addEventListener("click", () => setActive("input")); // L838
+  // Auth UI
+  function setAuthUiSignedOut() {
+    if (authCard) authCard.style.display = "";
+    if (signOutBtn) signOutBtn.style.display = "none";
+    if (authStatus) authStatus.textContent = "Sign in to sync across devices.";
+    if (authHint) authHint.textContent = "";
+    syncLabel.textContent = "Signed out";
+    setDot("");
+  }
 
-  makePaneExpandable(paneInput, "input"); // L840
-  makePaneExpandable(paneQueue, "queue"); // L841
+  function setAuthUiSignedIn(email) {
+    if (authCard) authCard.style.display = "none";
+    if (signOutBtn) signOutBtn.style.display = "";
+    syncLabel.textContent = "Synced";
+    setDot("online");
+    if (authStatus) authStatus.textContent = `Signed in as ${email}`;
+  }
 
-  typeEl?.addEventListener("change", updateTypeUI); // L843
-  addBtn?.addEventListener("click", addItem); // L844
-  clearBtn?.addEventListener("click", clearForm); // L845
-  refreshBtn?.addEventListener("click", refreshFromCloud); // L846
+  async function sendMagicLink() {
+    if (!isConfigured()) {
+      alert("Missing Supabase config in config.js (SUPABASE_URL + SUPABASE_ANON_KEY).");
+      return;
+    }
+    const email = (authEmail?.value || "").trim();
+    if (!email) { alert("Enter your email."); authEmail?.focus(); return; }
 
-  searchEl?.addEventListener("input", render); // L848
-  filterStatusEl?.addEventListener("change", render); // L849
-  sortEl?.addEventListener("change", render); // L850
+    setBusy(true, "Sending link…");
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: window.location.origin + window.location.pathname }
+      });
+      if (error) throw error;
+      if (authHint) authHint.textContent = "Check your email for the sign-in link (open in the same browser).";
+    } catch (err) {
+      setError("Auth error");
+      alert(err.message || String(err));
+    } finally {
+      setBusy(false, session ? "Synced" : "Signed out");
+    }
+  }
 
-  sendLinkBtn?.addEventListener("click", sendMagicLink); // L852
-  signOutBtn?.addEventListener("click", signOut); // L853
+  async function doSignOut() {
+    if (!supabase) return;
+    setBusy(true, "Signing out…");
+    await supabase.auth.signOut();
+    session = null;
+    items = [];
+    updateCounts();
+    render();
+    setAuthUiSignedOut();
+    setBusy(false, "Signed out");
+  }
 
-  window.addEventListener("resize", () => { // L855
-    const inputIsActive = paneInput?.classList.contains("active");
+  // Wire events (THIS is what was missing when things “don’t click”)
+  railInput.addEventListener("click", (e) => { e.stopPropagation(); setActive("input"); });
+  railQueue.addEventListener("click", (e) => { e.stopPropagation(); setActive("queue"); });
+  mobileViewQueueBtn.addEventListener("click", (e) => { e.stopPropagation(); setActive("queue"); });
+  jumpAddBtn.addEventListener("click", (e) => { e.stopPropagation(); setActive("input"); });
+
+  paneInput.addEventListener("click", () => { if (paneInput.classList.contains("rail")) setActive("input"); });
+  paneQueue.addEventListener("click", () => { if (paneQueue.classList.contains("rail")) setActive("queue"); });
+
+  typeEl.addEventListener("change", updateTypeUI);
+  addBtn.addEventListener("click", addItem);
+  clearBtn.addEventListener("click", clearForm);
+  refreshBtn.addEventListener("click", refreshFromCloud);
+
+  searchEl?.addEventListener("input", render);
+  filterStatusEl?.addEventListener("change", render);
+  sortEl?.addEventListener("change", render);
+
+  sendLinkBtn?.addEventListener("click", sendMagicLink);
+  signOutBtn?.addEventListener("click", doSignOut);
+
+  window.addEventListener("resize", () => {
+    const inputIsActive = paneInput.classList.contains("active");
     setActive(inputIsActive ? "input" : "queue");
   });
 
-  /******************************************************************
-   * Boot
-   ******************************************************************/
-  updateTypeUI(); // L865
-  setupAutocomplete(); // L866
-  setActive("input"); // L867
+  // Boot
+  updateTypeUI();
+  setupAutocomplete();
+  setActive("input");
 
-  if (!isConfigured()) { // L869
+  if (!isConfigured()) {
     setError("Missing Supabase config");
     setAuthUiSignedOut();
     render();
     return;
   }
 
-  (async () => { // L876
+  (async () => {
     const { data } = await supabase.auth.getSession();
     session = data.session || null;
 
@@ -734,7 +609,7 @@
       render();
     }
 
-    supabase.auth.onAuthStateChange(async (_event, newSession) => { // L889
+    supabase.auth.onAuthStateChange(async (_event, newSession) => {
       session = newSession;
       if (session?.user?.email) {
         setAuthUiSignedIn(session.user.email);
@@ -747,4 +622,4 @@
       }
     });
   })();
-})();
+});
